@@ -48,7 +48,7 @@ def validate(uri_contains=None, uri_not_contains=None,
     error = ""
     if not valid_uri_contains or not valid_uri_not_contains or not valid_body_contains or not valid_body_not_contains:
         err = sorted(ERRORS_CONTAINERS, key=len)
-        for i in range(0, len(err)):
+        for i in range(len(err)):
             if len(str(err[i])) > 10:
                 error = str(err[i])
                 break
