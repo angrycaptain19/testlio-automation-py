@@ -200,11 +200,7 @@ def _get_datetime_now():
     # return True if it's in daylight saving time
     daylight_saving = is_dst(local.time_zone_name)
     print("{0} DAYLIGHT SAVING IS {1}".format(local.time_zone_name, daylight_saving))
-    # Hardcode timezone difference
-    if daylight_saving is False:
-        datetime_now = datetime.now(local.timezone) + timedelta(hours=5)
-    else:
-        datetime_now = datetime.now(local.timezone) + timedelta(hours=5)  # + timedelta(hours=1)  # daylight savings time
+    datetime_now = datetime.now(local.timezone) + timedelta(hours=5)
     return datetime_now.replace(tzinfo=None)
 
 

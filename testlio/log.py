@@ -209,15 +209,11 @@ class EventLogger(object):
         """
 
         prefix = 'element_'
-        data = {}
-
-        for key, value in kwargs.items():
-            if not key.startswith(prefix):
-                continue
-            # Remove prefix from key and add to data
-            data[''.join(key.split('_')[1:])] = value
-
-        return data
+        return {
+            ''.join(key.split('_')[1:]): value
+            for key, value in kwargs.items()
+            if key.startswith(prefix)
+        }
 
     def _format_dict_data(self, data):
         out_str = ''

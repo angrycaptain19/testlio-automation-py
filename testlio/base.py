@@ -210,10 +210,8 @@ class TestlioAutomationTest(unittest.TestCase):
         self.event = EventLogger(self.name)
 
         # Setup self.capabilities
-        capabilities = {}
+        capabilities = {'platform': os.getenv('PLATFORM')}
 
-        # Web
-        capabilities['platform'] = os.getenv('PLATFORM')
         capabilities['browserName'] = os.getenv('BROWSER')
         capabilities['version'] = os.getenv('VERSION')
 
@@ -237,7 +235,6 @@ class TestlioAutomationTest(unittest.TestCase):
                 self.event._event_data("ClockHolder STOP Mechanism - after driver quit")
             except:
                 self.event._log_info(self.event._event_data("Failure during closing the driver"))
-                pass
         # if self.angel_driver:
         #     try:
         #         self.angel_driver.quit()
@@ -264,10 +261,7 @@ class TestlioAutomationTest(unittest.TestCase):
         # self.dismiss_update_popup()
         self.__stop_execution_on_timeout()
         self.set_implicit_wait(1)
-        if kwargs.has_key('timeout'):
-            timeout = kwargs['timeout']
-        else:
-            timeout = 10
+        timeout = kwargs['timeout'] if kwargs.has_key('timeout') else 10
         wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5,
                              ignored_exceptions=[ElementNotVisibleException, ElementNotSelectableException,
                                                  StaleElementReferenceException, TimeoutException])
@@ -294,10 +288,7 @@ class TestlioAutomationTest(unittest.TestCase):
         # self.run_phantom_driver_click('Search')
         self.__stop_execution_on_timeout()
         self.set_implicit_wait(1)
-        if kwargs.has_key('timeout'):
-            timeout = kwargs['timeout']
-        else:
-            timeout = 10
+        timeout = kwargs['timeout'] if kwargs.has_key('timeout') else 10
         wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5,
                              ignored_exceptions=[ElementNotVisibleException, ElementNotSelectableException,
                                                  StaleElementReferenceException, TimeoutException, WebDriverException])
@@ -323,10 +314,7 @@ class TestlioAutomationTest(unittest.TestCase):
         # self.dismiss_update_popup()
         self.__stop_execution_on_timeout()
         self.set_implicit_wait(1)
-        if kwargs.has_key('timeout'):
-            timeout = kwargs['timeout']
-        else:
-            timeout = 10
+        timeout = kwargs['timeout'] if kwargs.has_key('timeout') else 10
         wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5,
                              ignored_exceptions=[ElementNotVisibleException, ElementNotSelectableException,
                                                  StaleElementReferenceException, TimeoutException, WebDriverException])
@@ -352,10 +340,7 @@ class TestlioAutomationTest(unittest.TestCase):
         # self.dismiss_update_popup()
         self.__stop_execution_on_timeout()
         self.set_implicit_wait(1)
-        if kwargs.has_key('timeout'):
-            timeout = kwargs['timeout']
-        else:
-            timeout = 10
+        timeout = kwargs['timeout'] if kwargs.has_key('timeout') else 10
         wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5,
                              ignored_exceptions=[ElementNotVisibleException, ElementNotSelectableException,
                                                  StaleElementReferenceException, TimeoutException, WebDriverException])
@@ -648,11 +633,7 @@ class TestlioAutomationTest(unittest.TestCase):
         Return: True or False
         """
         self.__stop_execution_on_timeout()
-        if 'timeout' in kwargs:
-            timeout = (kwargs['timeout'])
-        else:
-            timeout = 30
-
+        timeout = kwargs['timeout'] if 'timeout' in kwargs else 30
         start_time = time()
 
         kwargs['timeout'] = 0  # we want exists to return immediately
@@ -695,15 +676,15 @@ class TestlioAutomationTest(unittest.TestCase):
                     self.assertTrueWithScreenShot(self.exists(id=data) or self.exists(accessibility_id=data),
                                                   screenshot=False,
                                                   msg="Element '%s' is expected to be existed on the page" % data)
-            else:
-                if type(data) is list:
-                    if self.__perform_hash_validations(data):
-                        sleep(with_timeout)
-                        self._validate_batch(data, strict, strict_visibility)
+            elif type(data) is list:
+                if self.__perform_hash_validations(data):
+                    sleep(with_timeout)
+                    self._validate_batch(data, strict, strict_visibility)
 
-                else:
-                    if not (self.exists(id=data, timeout=7) or self.exists(accessibility_id=data, timeout=7)):
-                        self.__log_batch_error(data)
+            elif not self.exists(id=data, timeout=7) and not self.exists(
+                accessibility_id=data, timeout=7
+            ):
+                self.__log_batch_error(data)
         else:
             sleep(with_timeout)
             self._validate_batch(data, strict, strict_visibility)
@@ -727,21 +708,18 @@ class TestlioAutomationTest(unittest.TestCase):
                     self.assertTrueWithScreenShot(re.search(
                         r'{0}'.format(pattern.format(key)), page_source, re.M | re.I), screenshot=False,
                         msg="Element '%s' is expected to be existed on the page" % key)
+                elif not re.search(r'{0}'.format(pattern.format(key)), page_source, re.M | re.I):
+                    error_flag = self.__log_batch_error(key)
                 else:
-                    if not re.search(r'{0}'.format(pattern.format(key)), page_source, re.M | re.I):
-                        error_flag = self.__log_batch_error(key)
-                    else:
-                        self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % key))
+                    self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % key))
+        elif strict:
+            self.assertTrueWithScreenShot(re.search(
+                r'{0}'.format(pattern.format(data)), page_source, re.M | re.I), screenshot=False,
+                msg="Element '%s' is expected to be existed on the page" % data)
+        elif not re.search(r'{0}'.format(pattern.format(data)), page_source, re.M | re.I):
+            error_flag = self.__log_batch_error(data)
         else:
-            if strict:
-                self.assertTrueWithScreenShot(re.search(
-                    r'{0}'.format(pattern.format(data)), page_source, re.M | re.I), screenshot=False,
-                    msg="Element '%s' is expected to be existed on the page" % data)
-            else:
-                if not re.search(r'{0}'.format(pattern.format(data)), page_source, re.M | re.I):
-                    error_flag = self.__log_batch_error(data)
-                else:
-                    self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % data))
+            self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % data))
 
         if error_flag:
             self._page_source_to_console_log(page_source)
@@ -799,24 +777,23 @@ class TestlioAutomationTest(unittest.TestCase):
         if strict:
             self.assertTrueWithScreenShot(self.exists(**kwargs), screenshot=screenshot,
                                           msg="Should see element with text or selector: '%s'" % selector)
+        elif not self.exists(**kwargs):
+            errors = os.environ[SOFT_ASSERTIONS_FAILURES]
+
+            self.event.assertion(data="*** FAILURE *** Element is missing: '%s'" % selector,
+                                 screenshot=self.screenshot())
+
+            errors += "\nElement is missing: '%s'" % selector
+            try:
+                errors = errors.encode('utf-8')
+            except:
+                errors = errors.encode('ascii', 'ignore').decode('ascii')
+
+            os.environ[SOFT_ASSERTIONS_FAILURES] = errors
+            os.environ[FAILURES_FOUND] = "true"
+            self._page_source_to_console_log()
         else:
-            if not self.exists(**kwargs):
-                errors = os.environ[SOFT_ASSERTIONS_FAILURES]
-
-                self.event.assertion(data="*** FAILURE *** Element is missing: '%s'" % selector,
-                                     screenshot=self.screenshot())
-
-                errors += "\nElement is missing: '%s'" % selector
-                try:
-                    errors = errors.encode('utf-8')
-                except:
-                    errors = errors.encode('ascii', 'ignore').decode('ascii')
-
-                os.environ[SOFT_ASSERTIONS_FAILURES] = errors
-                os.environ[FAILURES_FOUND] = "true"
-                self._page_source_to_console_log()
-            else:
-                self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % selector))
+            self.event._log_info(self.event._event_data("*** SUCCESS *** Element is presented: '%s'" % selector))
 
     def verify_not_exists(self, strict=False, **kwargs):
         screenshot = False
@@ -841,21 +818,20 @@ class TestlioAutomationTest(unittest.TestCase):
         if strict:
             self.assertTrueWithScreenShot(not self.exists(**kwargs), screenshot=screenshot,
                                           msg="Should NOT see element with text or selector: '%s'" % selector)
+        elif self.exists(**kwargs):
+            errors = os.environ[SOFT_ASSERTIONS_FAILURES]
+            self.event.assertion(data="*** FAILURE *** Element is presented but should not be: '%s'" % selector,
+                                 screenshot=self.screenshot())
+            errors += "\nElement is presented but should not be: '%s'" % selector
+            try:
+                errors = errors.encode('utf-8')
+            except:
+                errors = errors.encode('ascii', 'ignore').decode('ascii')
+            os.environ[SOFT_ASSERTIONS_FAILURES] = errors
+            os.environ[FAILURES_FOUND] = "true"
+            self._page_source_to_console_log()
         else:
-            if self.exists(**kwargs):
-                errors = os.environ[SOFT_ASSERTIONS_FAILURES]
-                self.event.assertion(data="*** FAILURE *** Element is presented but should not be: '%s'" % selector,
-                                     screenshot=self.screenshot())
-                errors += "\nElement is presented but should not be: '%s'" % selector
-                try:
-                    errors = errors.encode('utf-8')
-                except:
-                    errors = errors.encode('ascii', 'ignore').decode('ascii')
-                os.environ[SOFT_ASSERTIONS_FAILURES] = errors
-                os.environ[FAILURES_FOUND] = "true"
-                self._page_source_to_console_log()
-            else:
-                self.event._log_info(self.event._event_data("*** SUCCESS *** Element missing: '%s'" % selector))
+            self.event._log_info(self.event._event_data("*** SUCCESS *** Element missing: '%s'" % selector))
 
     def verify_not_equal(self, obj1, obj2, screenshot=False):
         self.assertTrueWithScreenShot(obj1 != obj2, screenshot=screenshot,
@@ -867,7 +843,7 @@ class TestlioAutomationTest(unittest.TestCase):
     def _element_action(self, action, element=None, **kwargs):
         """Find element if not supplied and send to action delegate"""
 
-        element = element if element else self._find_element(**kwargs)
+        element = element or self._find_element(**kwargs)
 
         action(element)
         return element
@@ -968,7 +944,7 @@ class TestlioAutomationTest(unittest.TestCase):
         """
 
         # Return dict of kwargs with prefix prepended to every key
-        return dict(('element_' + key, value) for key, value in kwargs.items())
+        return {'element_' + key: value for key, value in kwargs.items()}
 
     def run_phantom_driver_click(self, selector):
         t1 = FuncThread(self.click_unappropriate_popup, selector)
@@ -986,9 +962,7 @@ class TestlioAutomationTest(unittest.TestCase):
     def _page_source_to_console_log(self, data=None):
 
         # remove when ipad issue is fixed
-        if 'iPad' in self.capabilities['deviceName']:
-            pass
-        else:
+        if 'iPad' not in self.capabilities['deviceName']:
             try:
                 page_source = data if data is not None else self.driver.page_source
                 log = page_source.encode('utf-8')
